@@ -108,15 +108,20 @@
 
   // Similar to ES6's rest param (http://ariya.ofilabs.com/2013/03/es6-and-rest-parameter.html)
   // This accumulates the arguments passed into an array, after a given index.
+  // 参考【链接】剩余参数（RestParameters）(http://www.jianshu.com/p/938ba29667c3)
+  // hzdalao: 这个方法是为高阶函数准备的。可以指定几个必要的参数，剩余的数组就好让 apply 处理。默认不传的话，那么多余参数列表的参数都自动放到 rest 里面去了
   var restArgs = function(func, startIndex) {
+    // startIndex默认返回func形参个数
     startIndex = startIndex == null ? func.length - 1 : +startIndex;
     return function() {
       var length = Math.max(arguments.length - startIndex, 0),
           rest = Array(length),
           index = 0;
+      // 把超出的参数存在一个数组里面保存
       for (; index < length; index++) {
         rest[index] = arguments[index + startIndex];
       }
+      // 为常用情况加速:一般的函数就一两个参数，那么就不用去遍历 args 了
       switch (startIndex) {
         case 0: return func.call(this, rest);
         case 1: return func.call(this, arguments[0], rest);
@@ -886,10 +891,15 @@
     };
 
     var debounced = restArgs(function(args) {
+      // 如果已有定时器 则清除
       if (timeout) clearTimeout(timeout);
       if (immediate) {
         var callNow = !timeout;
+        // 此处的回调函数later不会被执行进func的apply方法，因为没有args
+        // immediate为真的情况下 仅在wait秒内，反复调用的第一次触发一个func
+        // 之后在wait毫秒以内再次进入此处时，timeout已存在，later函数就用于重新记录新的定时器
         timeout = setTimeout(later, wait);
+        // timeout为null 对func的第一次调用
         if (callNow) result = func.apply(this, args);
       } else {
         timeout = _.delay(later, wait, this, args);

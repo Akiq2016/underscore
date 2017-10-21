@@ -851,10 +851,16 @@
 
     var throttled = function() {
       var now = _.now();
+      // 首次触发时 若leading=false 则previous为当前时间戳
+      // 目的是让remaining为wait毫秒，不会立即触发func
       if (!previous && options.leading === false) previous = now;
       var remaining = wait - (now - previous);
       context = this;
       args = arguments;
+      // 如果remaining <= 0 或者 remaining > wait（表示客户端系统时间被调整过）时
+      // 1.如果存在定时器，把定时器清除 + 重置id
+      // 2.立即执行func，并将这次触发throttled方法的时间戳保存
+      // 3.如果不存在定时器，把上下文 + 参数列表重置
       if (remaining <= 0 || remaining > wait) {
         if (timeout) {
           clearTimeout(timeout);
@@ -864,6 +870,8 @@
         result = func.apply(context, args);
         if (!timeout) context = args = null;
       } else if (!timeout && options.trailing !== false) {
+        // 不存在定时器 且未指定 options.trailing = false
+        // 1.则在remaining毫秒后执行later
         timeout = setTimeout(later, remaining);
       }
       return result;

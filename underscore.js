@@ -561,30 +561,37 @@
     return _.difference(array, otherArrays);
   });
 
-  // Produce a duplicate-free version of the array. If the array has already
-  // been sorted, you have the option of using a faster algorithm.
-  // Aliased as `unique`.
+  // 生成无重复元素的数组。
+  // 如果数组已经排序过，你可以传入第二个参数为true，以选择使用更快的算法。
+  // 第三个参数方便传入方法，在去重同时对元素进行操作
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
+
+    // isSorted未传入布尔值，则默认初始化部分参数
     if (!_.isBoolean(isSorted)) {
       context = iteratee;
       iteratee = isSorted;
       isSorted = false;
     }
     if (iteratee != null) iteratee = cb(iteratee, context);
+
     var result = [];
     var seen = [];
+
     for (var i = 0, length = getLength(array); i < length; i++) {
       var value = array[i],
           computed = iteratee ? iteratee(value, i, array) : value;
       if (isSorted) {
+        // 与前一个元素作比较
         if (!i || seen !== computed) result.push(value);
         seen = computed;
       } else if (iteratee) {
+        // 元素被操作改变过，则在seen数组中查找是否有相同元素
         if (!_.contains(seen, computed)) {
           seen.push(computed);
           result.push(value);
         }
       } else if (!_.contains(result, value)) {
+        // 直接在result数组中查找是否有相同元素
         result.push(value);
       }
     }

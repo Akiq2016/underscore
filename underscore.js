@@ -88,14 +88,24 @@
 
   var builtinIteratee;
 
-  // An internal function to generate callbacks that can be applied to each
-  // element in a collection, returning the desired result — either `identity`,
-  // an arbitrary callback, a property matcher, or a property accessor.
+  // 这个内部函数用来生成可应用于集合中每个元素的回调iteratee，并返回所需的结果
   var cb = function(value, context, argCount) {
+
+    // 默认的_.iteratee和builtinIteratee都使用了cb方法，但是_.iteratee可以被用户重写
+    // 而builtinIteratee保存的是旧的引用，则underscore可以通过两者的对比来识别是否存在自定义的_.iteratee
+    // 有自定义_.iteratee：则直接使用自定义规则
     if (_.iteratee !== builtinIteratee) return _.iteratee(value, context);
+
+    // 没有传入value：iteratee 的行为是返回当前迭代元素自身（_.identity方法）
     if (value == null) return _.identity;
+
+    // value是个函数：iteratee 的行为是使用value这个函数对当前迭代元素进行操作（optimizeCb对调用方式进行优化）
     if (_.isFunction(value)) return optimizeCb(value, context, argCount);
+
+    // 是个非数组对象：iteratee 的行为是判断当前被迭代元素是否匹配给定的value对象（_.matcher方法）
     if (_.isObject(value) && !_.isArray(value)) return _.matcher(value);
+
+    // value是字面量：iteratee 的行为是获取属性名为value的值(_.property方法)
     return _.property(value);
   };
 
